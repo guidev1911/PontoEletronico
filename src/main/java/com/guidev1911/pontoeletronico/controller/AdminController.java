@@ -2,26 +2,30 @@ package com.guidev1911.pontoeletronico.controller;
 
 import com.guidev1911.pontoeletronico.model.User;
 import com.guidev1911.pontoeletronico.service.UserService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin")
+@RequiredArgsConstructor
 public class AdminController {
 
     private final UserService service;
 
-    public AdminController(UserService service) {
-        this.service = service;
-    }
-
     @PostMapping("/create-user")
-    public User createUser(@RequestParam String username, @RequestParam(defaultValue = "USER") String role) {
-        return service.createUser(username, role);
+    public ResponseEntity<User> createUser(
+            @RequestParam String username,
+            @RequestParam(defaultValue = "USER") String role
+    ) {
+        return ResponseEntity.ok(service.createUser(username, role));
     }
 
     @PostMapping("/reset-password/{id}")
-    public String resetPassword(@PathVariable Long id) {
+    public ResponseEntity<?> resetPassword(@PathVariable Long id) {
         service.resetPassword(id);
-        return "Password reset to default.";
+        return ResponseEntity.ok(Map.of("message", "Password reset to default"));
     }
 }
