@@ -16,7 +16,7 @@ public class UserService {
     private final UserRepository repo;
     private final PasswordEncoder encoder;
 
-    private static final String DEFAULT_PASSWORD = "changeme123";
+    private static final String DEFAULT_PASSWORD = "detran2025";
 
     public User createUser(String username, String role) {
         if (repo.findByUsername(username).isPresent()) {
