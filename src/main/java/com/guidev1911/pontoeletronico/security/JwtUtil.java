@@ -24,6 +24,15 @@ public class JwtUtil {
                 .compact();
     }
 
+    public String generateRefreshToken(String username) {
+        return Jwts.builder()
+                .subject(username)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 7L * 24 * 60 * 60 * 1000))
+                .signWith(key)
+                .compact();
+    }
+
     public Jws<Claims> validateToken(String token) {
         return Jwts.parser()
                 .verifyWith((SecretKey) key)

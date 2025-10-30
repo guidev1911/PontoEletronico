@@ -1,9 +1,11 @@
 package com.guidev1911.pontoeletronico.controller;
 
 import com.guidev1911.pontoeletronico.exceptions.BusinessException;
+import com.guidev1911.pontoeletronico.model.RefreshToken;
 import com.guidev1911.pontoeletronico.model.User;
 import com.guidev1911.pontoeletronico.repository.UserRepository;
 import com.guidev1911.pontoeletronico.security.JwtUtil;
+import com.guidev1911.pontoeletronico.service.RefreshTokenService;
 import com.guidev1911.pontoeletronico.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +23,7 @@ public class AuthController {
     private final PasswordEncoder encoder;
     private final JwtUtil jwtUtil;
     private final UserService userService;
+    private final RefreshTokenService refreshTokenService;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> req) {
@@ -30,26 +33,36 @@ public class AuthController {
         User user = userRepo.findByUsername(username)
                 .orElseThrow(() -> new BusinessException("Invalid username or password"));
 
-        if (!user.isEnabled()) {
-            throw new BusinessException("User is disabled");
-        }
-
-        if (!encoder.matches(password, user.getPasswordHash())) {
+        if (!user.isEnabled()) throw new BusinessException("User is disabled");
+        if (!encoder.matches(password, user.getPasswordHash()))
             throw new BusinessException("Invalid username or password");
-        }
+        if (user.isMustChangePassword())
+            return ResponseEntity.status(403).body(Map.of("mustChangePassword", true));
 
-        if (user.isMustChangePassword()) {
-            return ResponseEntity.status(403).body(Map.of(
-                    "mustChangePassword", true,
-                    "message", "Password change required before login"
-            ));
-        }
+        String accessToken = jwtUtil.generateToken(user.getUsername(), user.getRole());
+        RefreshToken refreshToken = refreshTokenService.create(user);
 
-        String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
         return ResponseEntity.ok(Map.of(
-                "token", token,
+                "accessToken", accessToken,
+                "refreshToken", refreshToken.getToken(),
                 "username", user.getUsername(),
                 "role", user.getRole()
+        ));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refresh(@RequestBody Map<String, String> req) {
+        String refreshTokenStr = req.get("refreshToken");
+
+        RefreshToken refresh = refreshTokenService.validate(refreshTokenStr);
+        User user = refresh.getUser();
+
+        String newAccess = jwtUtil.generateToken(user.getUsername(), user.getRole());
+        RefreshToken newRefresh = refreshTokenService.create(user);
+
+        return ResponseEntity.ok(Map.of(
+                "accessToken", newAccess,
+                "refreshToken", newRefresh.getToken()
         ));
     }
 
@@ -61,9 +74,8 @@ public class AuthController {
         User user = userRepo.findByUsername(username)
                 .orElseThrow(() -> new BusinessException("User not found"));
 
-        if (!user.isMustChangePassword()) {
+        if (!user.isMustChangePassword())
             throw new BusinessException("Password change not allowed");
-        }
 
         userService.updatePassword(user, newPassword);
         return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
