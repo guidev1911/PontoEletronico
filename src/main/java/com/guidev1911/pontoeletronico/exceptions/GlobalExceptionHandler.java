@@ -17,7 +17,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                 Map.of(
                         "timestamp", Instant.now(),
-                        "error", ex.getMessage()
+                        "status", HttpStatus.BAD_REQUEST.value(),
+                        "error", "Business Error",
+                        "message", ex.getMessage()
                 )
         );
     }
@@ -27,7 +29,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                 Map.of(
                         "timestamp", Instant.now(),
-                        "error", "Unexpected server error"
+                        "status", HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                        "error", "Internal Server Error",
+                        "message", "Unexpected server error"
                 )
         );
     }
