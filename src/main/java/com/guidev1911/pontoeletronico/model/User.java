@@ -3,10 +3,19 @@ package com.guidev1911.pontoeletronico.model;
 import jakarta.persistence.*;
 import java.time.Instant;
 
+import jakarta.persistence.Id;
 import lombok.*;
+
+import jakarta.persistence.*;
+import lombok.*;
+import org.springframework.data.annotation.*;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.Instant;
 
 @Entity
 @Table(name = "users")
+@EntityListeners(AuditingEntityListener.class)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -35,16 +44,19 @@ public class User {
     @Column(nullable = false, length = 20)
     private String role = "USER";
 
-    @Builder.Default
+    @CreatedBy
+    @Column(updatable = false, length = 100)
+    private String createdBy;
+
+    @LastModifiedBy
+    @Column(length = 100)
+    private String updatedBy;
+
+    @CreatedDate
     @Column(nullable = false, updatable = false)
-    private Instant createdAt = Instant.now();
+    private Instant createdAt;
 
-    @Builder.Default
+    @LastModifiedDate
     @Column(nullable = false)
-    private Instant updatedAt = Instant.now();
-
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedAt = Instant.now();
-    }
+    private Instant updatedAt;
 }
