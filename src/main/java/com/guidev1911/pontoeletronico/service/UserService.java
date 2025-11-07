@@ -1,6 +1,9 @@
 package com.guidev1911.pontoeletronico.service;
 
+import com.guidev1911.pontoeletronico.dto.CreateUserRequest;
+import com.guidev1911.pontoeletronico.dto.UserResponse;
 import com.guidev1911.pontoeletronico.exceptions.BusinessException;
+import com.guidev1911.pontoeletronico.mapper.UserMapper;
 import com.guidev1911.pontoeletronico.model.User;
 import com.guidev1911.pontoeletronico.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -15,21 +18,19 @@ public class UserService {
 
     private final UserRepository repo;
     private final PasswordEncoder encoder;
+    private final UserMapper mapper;
 
     private static final String DEFAULT_PASSWORD = "detran2025";
 
-    public User createUser(String username, String role) {
-        if (repo.findByUsername(username).isPresent()) {
+    public UserResponse createUser(CreateUserRequest request) {
+        if (repo.findByUsername(request.getUsername()).isPresent()) {
             throw new BusinessException("Username already exists");
         }
 
-        User u = new User();
-        u.setUsername(username);
-        u.setRole(role);
-        u.setEnabled(true);
-        u.setMustChangePassword(true);
-        u.setPasswordHash(encoder.encode(DEFAULT_PASSWORD));
-        return repo.save(u);
+        User user = mapper.toEntity(request);
+        user.setPasswordHash(encoder.encode(DEFAULT_PASSWORD));
+
+        return mapper.toResponse(repo.save(user));
     }
 
     public void resetPassword(Long userId) {
