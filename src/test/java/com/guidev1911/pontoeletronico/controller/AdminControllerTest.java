@@ -32,7 +32,7 @@ class AdminControllerTest {
     private ObjectMapper mapper = new ObjectMapper();
 
     @BeforeEach
-    void setup() {
+    void configurar() {
         MockitoAnnotations.openMocks(this);
         mockMvc = org.springframework.test.web.servlet.setup.MockMvcBuilders
                 .standaloneSetup(controller)
@@ -40,7 +40,7 @@ class AdminControllerTest {
     }
 
     @Test
-    void createUser_ShouldReturnUserResponse() throws Exception {
+    void deveCriarUsuarioComSucesso() throws Exception {
         CreateUserRequest req = new CreateUserRequest();
         req.setUsername("john");
 
@@ -63,7 +63,7 @@ class AdminControllerTest {
     }
 
     @Test
-    void resetPassword_ShouldReturnSuccessMessage() throws Exception {
+    void deveResetarSenhaComSucesso() throws Exception {
         mockMvc.perform(post("/api/admin/reset-password/5"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Password reset to default"));
