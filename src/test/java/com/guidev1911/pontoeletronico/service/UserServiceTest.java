@@ -34,12 +34,12 @@ class UserServiceTest {
     private final String DEFAULT_PASSWORD = "detran2025";
 
     @BeforeEach
-    void setup() {
+    void configurar() {
         MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    void createUser_ShouldCreateNewUser_WhenUsernameNotExists() {
+    void criarUsuario_DeveCriarNovoUsuario_QuandoUsernameNaoExiste() {
 
         CreateUserRequest req = new CreateUserRequest();
         req.setUsername("guilherme");
@@ -49,10 +49,10 @@ class UserServiceTest {
         entity.setUsername(req.getUsername());
         entity.setRole(req.getRole());
 
-        User saved = new User();
-        saved.setId(1L);
-        saved.setUsername(req.getUsername());
-        saved.setRole(req.getRole());
+        User salvo = new User();
+        salvo.setId(1L);
+        salvo.setUsername(req.getUsername());
+        salvo.setRole(req.getRole());
 
         UserResponse response = new UserResponse();
         response.setId(1L);
@@ -60,58 +60,59 @@ class UserServiceTest {
 
         when(repo.findByUsername("guilherme")).thenReturn(Optional.empty());
         when(mapper.toEntity(req)).thenReturn(entity);
-        when(encoder.encode(DEFAULT_PASSWORD)).thenReturn("encodedPass");
-        when(repo.save(entity)).thenReturn(saved);
-        when(mapper.toResponse(saved)).thenReturn(response);
+        when(encoder.encode(DEFAULT_PASSWORD)).thenReturn("senhaCodificada");
+        when(repo.save(entity)).thenReturn(salvo);
+        when(mapper.toResponse(salvo)).thenReturn(response);
 
-        UserResponse result = service.createUser(req);
+        UserResponse resultado = service.createUser(req);
 
-        assertEquals("guilherme", result.getUsername());
+        assertEquals("guilherme", resultado.getUsername());
         verify(repo).save(entity);
         verify(encoder).encode(DEFAULT_PASSWORD);
     }
 
     @Test
-    void createUser_ShouldThrowException_WhenUsernameExists() {
+    void criarUsuario_DeveLancarExcecao_QuandoUsernameJaExiste() {
 
         CreateUserRequest req = new CreateUserRequest();
-        req.setUsername("existing");
+        req.setUsername("existente");
 
-        when(repo.findByUsername("existing")).thenReturn(Optional.of(new User()));
+        when(repo.findByUsername("existente")).thenReturn(Optional.of(new User()));
 
         assertThrows(BusinessException.class, () -> service.createUser(req));
         verify(repo, never()).save(any());
     }
 
     @Test
-    void resetPassword_ShouldEncodeAndReset() {
+    void resetarSenha_DeveGerarHashENecessidadeDeAlteracao() {
 
         User user = new User();
         user.setId(1L);
-        user.setPasswordHash("oldHash");
+        user.setPasswordHash("hashAntigo");
 
         when(repo.findById(1L)).thenReturn(Optional.of(user));
-        when(encoder.encode(DEFAULT_PASSWORD)).thenReturn("newHash");
+        when(encoder.encode(DEFAULT_PASSWORD)).thenReturn("novoHash");
 
         service.resetPassword(1L);
 
-        assertEquals("newHash", user.getPasswordHash());
+        assertEquals("novoHash", user.getPasswordHash());
         assertTrue(user.isMustChangePassword());
         verify(repo).save(user);
     }
 
     @Test
-    void resetPassword_ShouldThrow_WhenUserNotFound() {
+    void resetarSenha_DeveLancarExcecao_QuandoUsuarioNaoEncontrado() {
         when(repo.findById(1L)).thenReturn(Optional.empty());
 
         assertThrows(BusinessException.class, () -> service.resetPassword(1L));
     }
 
     @Test
-    void updatePassword_ShouldEncodeNewPassword_WhenValid() {
+    void atualizarSenha_DeveCodificarNovaSenha_QuandoValida() {
 
         User user = new User();
         user.setId(1L);
+
         when(encoder.encode("novaSenha")).thenReturn("hashNova");
 
         service.updatePassword(user, "novaSenha");
@@ -122,8 +123,9 @@ class UserServiceTest {
     }
 
     @Test
-    void updatePassword_ShouldThrow_WhenPasswordTooShort() {
+    void atualizarSenha_DeveLancarExcecao_QuandoSenhaMuitoCurta() {
         User user = new User();
+
         assertThrows(BusinessException.class, () -> service.updatePassword(user, "123"));
         verify(repo, never()).save(any());
     }
