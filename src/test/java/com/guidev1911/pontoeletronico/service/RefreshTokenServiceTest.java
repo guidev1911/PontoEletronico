@@ -25,12 +25,12 @@ class RefreshTokenServiceTest {
     private RefreshTokenService service;
 
     @BeforeEach
-    void setup() {
+    void configurar() {
         MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    void create_ShouldDeleteOldTokensAndSaveNew() {
+    void criar_DeveExcluirTokensAntigosESalvarNovo() {
 
         User user = new User();
         user.setId(1L);
@@ -44,18 +44,19 @@ class RefreshTokenServiceTest {
 
         when(repo.save(any(RefreshToken.class))).thenReturn(savedToken);
 
-        RefreshToken result = service.create(user);
+        RefreshToken resultado = service.create(user);
 
         verify(repo).deleteByUser(user);
         verify(repo).save(any(RefreshToken.class));
-        assertNotNull(result);
-        assertNotNull(result.getToken());
-        assertEquals(user, result.getUser());
-        assertTrue(result.getExpiryDate().isAfter(Instant.now()));
+
+        assertNotNull(resultado);
+        assertNotNull(resultado.getToken());
+        assertEquals(user, resultado.getUser());
+        assertTrue(resultado.getExpiryDate().isAfter(Instant.now()));
     }
 
     @Test
-    void validate_ShouldReturnToken_WhenValid() {
+    void validar_DeveRetornarToken_QuandoValido() {
 
         RefreshToken token = RefreshToken.builder()
                 .token("validToken")
@@ -64,36 +65,37 @@ class RefreshTokenServiceTest {
 
         when(repo.findByToken("validToken")).thenReturn(Optional.of(token));
 
-        RefreshToken result = service.validate("validToken");
+        RefreshToken resultado = service.validate("validToken");
 
-        assertEquals(token, result);
+        assertEquals(token, resultado);
         verify(repo, never()).delete(any());
     }
 
     @Test
-    void validate_ShouldThrow_WhenTokenNotFound() {
-        when(repo.findByToken("unknown")).thenReturn(Optional.empty());
+    void validar_DeveLancarExcecao_QuandoTokenNaoEncontrado() {
+        when(repo.findByToken("desconhecido")).thenReturn(Optional.empty());
 
-        assertThrows(BusinessException.class, () -> service.validate("unknown"));
+        assertThrows(BusinessException.class, () -> service.validate("desconhecido"));
     }
 
     @Test
-    void validate_ShouldDeleteAndThrow_WhenTokenExpired() {
+    void validar_DeveExcluirELancarExcecao_QuandoTokenExpirado() {
 
-        RefreshToken expired = RefreshToken.builder()
-                .token("expired")
+        RefreshToken expirado = RefreshToken.builder()
+                .token("expirado")
                 .expiryDate(Instant.now().minusSeconds(60))
                 .build();
 
-        when(repo.findByToken("expired")).thenReturn(Optional.of(expired));
+        when(repo.findByToken("expirado")).thenReturn(Optional.of(expirado));
 
-        BusinessException ex = assertThrows(BusinessException.class, () -> service.validate("expired"));
+        BusinessException ex = assertThrows(BusinessException.class, () -> service.validate("expirado"));
+
         assertEquals("Refresh token expired", ex.getMessage());
-        verify(repo).delete(expired);
+        verify(repo).delete(expirado);
     }
 
     @Test
-    void delete_ShouldCallRepository() {
+    void deletar_DeveChamarRepositorio() {
         RefreshToken token = new RefreshToken();
         service.delete(token);
         verify(repo).delete(token);
