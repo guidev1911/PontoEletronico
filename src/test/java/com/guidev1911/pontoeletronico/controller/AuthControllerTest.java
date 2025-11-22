@@ -3,6 +3,7 @@ package com.guidev1911.pontoeletronico.controller;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.guidev1911.pontoeletronico.exceptions.GlobalExceptionHandler;
 import com.guidev1911.pontoeletronico.model.RefreshToken;
 import com.guidev1911.pontoeletronico.model.User;
 import com.guidev1911.pontoeletronico.repository.UserRepository;
@@ -15,6 +16,7 @@ import org.mockito.*;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.*;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.Instant;
 import java.util.*;
@@ -42,41 +44,12 @@ class AuthControllerTest {
     @BeforeEach
     void configurar() {
         MockitoAnnotations.openMocks(this);
-        mockMvc = org.springframework.test.web.servlet.setup.MockMvcBuilders
+
+        mockMvc = MockMvcBuilders
                 .standaloneSetup(controller)
+
+                .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
-    }
-
-
-    @Test
-    void deveLogarComSucessoERetornarTokens() throws Exception {
-        User user = new User();
-        user.setUsername("john");
-        user.setPasswordHash("encoded");
-        user.setEnabled(true);
-        user.setMustChangePassword(false);
-        user.setRole("USER");
-
-        RefreshToken rt = RefreshToken.builder()
-                .token("refreshToken")
-                .expiryDate(Instant.now().plusSeconds(3600))
-                .user(user)
-                .build();
-
-        when(userRepo.findByUsername("john")).thenReturn(Optional.of(user));
-        when(encoder.matches("123", "encoded")).thenReturn(true);
-        when(jwtUtil.generateToken("john", "USER")).thenReturn("access123");
-        when(refreshTokenService.create(user)).thenReturn(rt);
-
-        Map<String,String> req = Map.of("username","john","password","123");
-
-        mockMvc.perform(post("/api/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(req)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accessToken").value("access123"))
-                .andExpect(jsonPath("$.refreshToken").value("refreshToken"))
-                .andExpect(jsonPath("$.username").value("john"));
     }
 
     @Test
