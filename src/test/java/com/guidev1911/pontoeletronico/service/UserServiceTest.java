@@ -7,6 +7,7 @@ import com.guidev1911.pontoeletronico.dto.UserResponse;
 import com.guidev1911.pontoeletronico.exceptions.BusinessException;
 import com.guidev1911.pontoeletronico.mapper.UserMapper;
 import com.guidev1911.pontoeletronico.model.User;
+import com.guidev1911.pontoeletronico.model.enums.Role;
 import com.guidev1911.pontoeletronico.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,16 +44,16 @@ class UserServiceTest {
 
         CreateUserRequest req = new CreateUserRequest();
         req.setUsername("guilherme");
-        req.setRole("USER");
+        req.setRole(Role.USER);
 
         User entity = new User();
-        entity.setUsername(req.getUsername());
-        entity.setRole(req.getRole());
+        entity.setUsername("guilherme");
+        entity.setRole(Role.USER);
 
         User salvo = new User();
         salvo.setId(1L);
-        salvo.setUsername(req.getUsername());
-        salvo.setRole(req.getRole());
+        salvo.setUsername("guilherme");
+        salvo.setRole(Role.USER);
 
         UserResponse response = new UserResponse();
         response.setId(1L);
@@ -77,7 +78,8 @@ class UserServiceTest {
         CreateUserRequest req = new CreateUserRequest();
         req.setUsername("existente");
 
-        when(repo.findByUsername("existente")).thenReturn(Optional.of(new User()));
+        when(repo.findByUsername("existente"))
+                .thenReturn(Optional.of(new User()));
 
         assertThrows(BusinessException.class, () -> service.createUser(req));
         verify(repo, never()).save(any());
@@ -102,6 +104,7 @@ class UserServiceTest {
 
     @Test
     void resetarSenha_DeveLancarExcecao_QuandoUsuarioNaoEncontrado() {
+
         when(repo.findById(1L)).thenReturn(Optional.empty());
 
         assertThrows(BusinessException.class, () -> service.resetPassword(1L));
@@ -124,6 +127,7 @@ class UserServiceTest {
 
     @Test
     void atualizarSenha_DeveLancarExcecao_QuandoSenhaMuitoCurta() {
+
         User user = new User();
 
         assertThrows(BusinessException.class, () -> service.updatePassword(user, "123"));
