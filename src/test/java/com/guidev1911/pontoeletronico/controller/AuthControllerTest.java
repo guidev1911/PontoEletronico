@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.guidev1911.pontoeletronico.exceptions.GlobalExceptionHandler;
 import com.guidev1911.pontoeletronico.model.RefreshToken;
 import com.guidev1911.pontoeletronico.model.User;
+import com.guidev1911.pontoeletronico.model.enums.Role;
 import com.guidev1911.pontoeletronico.repository.UserRepository;
 import com.guidev1911.pontoeletronico.security.JwtUtil;
 import com.guidev1911.pontoeletronico.service.RefreshTokenService;
@@ -122,7 +123,7 @@ class AuthControllerTest {
     void deveGerarNovosTokensAoAtualizarRefreshToken() throws Exception {
         User user = new User();
         user.setUsername("john");
-        user.setRole("USER");
+        user.setRole(Role.USER);
 
         RefreshToken antigo = RefreshToken.builder()
                 .token("old")

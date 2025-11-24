@@ -39,14 +39,14 @@ public class AuthController {
         if (user.isMustChangePassword())
             return ResponseEntity.status(403).body(Map.of("mustChangePassword", true));
 
-        String accessToken = jwtUtil.generateToken(user.getUsername(), user.getRole());
+        String accessToken = jwtUtil.generateToken(user.getUsername(), user.getRole().name());
         RefreshToken refreshToken = refreshTokenService.create(user);
 
         return ResponseEntity.ok(Map.of(
                 "accessToken", accessToken,
                 "refreshToken", refreshToken.getToken(),
                 "username", user.getUsername(),
-                "role", user.getRole()
+                "role", user.getRole().name()
         ));
     }
 
@@ -57,7 +57,7 @@ public class AuthController {
         RefreshToken refresh = refreshTokenService.validate(refreshTokenStr);
         User user = refresh.getUser();
 
-        String newAccess = jwtUtil.generateToken(user.getUsername(), user.getRole());
+        String newAccess = jwtUtil.generateToken(user.getUsername(), user.getRole().name());
         RefreshToken newRefresh = refreshTokenService.create(user);
 
         return ResponseEntity.ok(Map.of(

@@ -1,5 +1,6 @@
 package com.guidev1911.pontoeletronico.model;
 
+import com.guidev1911.pontoeletronico.model.enums.Role;
 import jakarta.persistence.*;
 import java.time.Instant;
 
@@ -40,9 +41,10 @@ public class User {
     @Column(nullable = false)
     private boolean mustChangePassword = true;
 
+    @Enumerated(EnumType.STRING)
     @Builder.Default
     @Column(nullable = false, length = 20)
-    private String role = "USER";
+    private Role role = Role.USER;
 
     @CreatedBy
     @Column(updatable = false, length = 100)
